@@ -1,0 +1,938 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html>
+
+    <!-- 
+    
+    
+    
+    CHANGELOG
+    
+    0.4.4
+    
+    - Command field is now working. Keep in mind that buffs only affect the 'effective dps'.
+    
+    0.4.3
+    
+    - cleaned up the html.
+    
+    0.4.2
+    
+    - now squadrons really work
+    
+    0.4.1
+    
+    - Made calculate_dps_skills easier to maintain and a lot faster
+    - calculate_dps_guns is now twice as fast
+    - calculate_ehp not twice as fast
+    
+    0.4
+    
+    - There is now a 'sieged mode' checkbox available if you choose artillery 
+    ship. In sieged mode, only DPS of the SHC and the artillery-skills is cal-
+    culated.
+    - Squadrons are now taken into account
+    - Fixed for patch 1.12b. Old data still available in the data_patch_1_12.js file.
+    - Fixed bug where some skills would be added multiple times
+       
+    0.3.3
+    
+    - updated for patch 1.12. old data is still available in the data_patch_1_11.js file.
+    
+    
+    0.3.2
+    
+    - there is now a 'compare to actual build' button. This way you can better fine-tune 
+    your build. Just make a build, press the 'compare to this' button, then make 
+    changes and press calculate as often as you want to see how everything changes.
+    The dotted lines represent your old build
+    - Made everything easier to maintain. Now, if a new ship or skill is added, 
+    you just have to add it to the 'database'. Thats it, no programming required 
+    (if it fits one of the types). It just works and is automatically added to 
+    the drop-down-menu(s) the only thing used for skills is 
+    skill[id][11][techlevel], anyway.
+    
+    
+    V 0.3.1
+    
+    - changed the colors back to the normal ones, if you compare a build the new lines are now dotted
+    
+    
+    V 0.3
+    
+    - you can now load a second build to compare your current one to
+    - more information: dps min/max guns, dps min/max skills, ehp min/max, shields min/max
+    - dps skills is now calculated before dps_guns, because it now also calculates the skill buffs
+    - priority target now taken into account
+    - skill dps calculation now a lot more efficient and easier to maintain
+    - new graph: total gun-dps over range (im just throwing all kind of features in there, let me know when they are useless)
+    * for this graph, rangeupgrades and radar beacon are taken into account. did you know that the maximum archievable range is almost 130 units?
+    * right now, you have to take radar beacon yourself to see the effect
+    * keep in mind that the whole program currently doesnt work with artillery ship, only unsieged damage is taken into account
+    - graphs now have relative placement instead of absolute.
+
+    
+    V 0.2.1 02.04.2012
+    
+    -effective DPS now rounded
+    -replaced all 'new Array()' with literal array notation '[]', should speed 
+    things up a little.
+    -better readability for 80 column displays.
+    -moved form-functions to janitor.js
+    -general code-cleanup
+    
+    
+    V 0.2 02.04.2012
+        
+     - groundbreaking technology now calculated in 5 rows instead of 73
+    - dps for skills now calculated. following skills are taken into account:
+    *quantum leap
+    *scannerj
+    *tracker
+    *rocket battery
+    *missile battery
+    *torpedoes
+    *shockwave
+    -combined DPS now calculated. thats (skill_dps+gun_dps)*skill_buff
+    -fixed size of diagrams
+    -ehp diagram now shows ehp (red) and shield (green) seperately.
+        
+    
+    
+    TODO:
+    
+    - COmmand field
+    - Carrier skills
+    - Reinforcements
+    - Escort ships
+    
+    -->
+    <!-- alright, lets do this!
+    
+    this is the main html file. it contains the forms (provide user input) and 
+    some janitoral scripts the 'real' work is mostly done in .js files that you 
+    can see a couple of rows further down.
+   
+    diagram.js: not written by me
+    data.js: raw data. Ship and itemstats, should be loaded first
+    janitor.js that are scripts for the forms, they dont calculate anything.
+    code.js: saving and loading
+    dps.js: calculates dps
+    ehp.js: calculates ehp
+    cp.js: calculates cp -->
+    <head>
+        <title>madmaxx' marvelous build calculator</title>
+        <SCRIPT Language="JavaScript" src="diagram.js"></SCRIPT>
+        <SCRIPT Language="JavaScript" src="data.js"></SCRIPT>
+        <SCRIPT Language="JavaScript" src="janitor.js"></SCRIPT>
+        <SCRIPT Language="JavaScript" src="code.js"></SCRIPT> 
+        <SCRIPT Language="JavaScript" src="dps.js"></SCRIPT>
+        <SCRIPT Language="JavaScript" src="ehp.js"></SCRIPT>  
+        <SCRIPT Language="JavaScript" src="cp.js"></SCRIPT> 
+        <SCRIPT Language="JavaScript" src="compare_builds.js"></SCRIPT>
+
+        <script type="text/javascript"></script>    </head>
+    <body onload="loadup()">
+        <table border=1>
+            <tr>
+                <td>
+                    <form name="shipselect">
+                        <table>
+                            <tr>
+                                <td>Ship:</td>
+                                <td>
+                                    <SELECT NAME = "ship" onchange="addskills()"></SELECT> <!-- ships are added through script 'addships' in 'janitor.js' --> 
+                                </td>
+                                <td>Mark:</td>
+                                <td>
+                                    <SELECT NAME = "mark" onchange="update_skillpoints()">
+                                        <OPTION VALUE =1>MK I
+                                        <OPTION VALUE =2>MK II
+                                        <OPTION VALUE =3>MK III
+                                        <OPTION VALUE =4>MK IV
+                                        <OPTION VALUE =5>MK V
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Or:</td>
+                                <td>
+                                    <input type="text" name="code" value="enter code here">
+                                </td>
+                                <td>
+                                    <input type="button" value="restore this build" onclick="loadbuild()">
+                                </td>
+                                <td>
+                                    Sieged:
+                                    <input type="checkbox" name="siegemode_checkbox">
+                                </td>
+                                
+                        </table>
+                    </form>
+                </td>
+                <td><form name="code">Unique code for this build: <input type="text" readonly name="code"></form></td>
+            <tr>
+            <tr>
+                <td>
+                    <form name="items">
+                        <table>
+                            <tr>
+                                <td>Items:</td>
+                            </tr>
+                            <tr>
+                                <td>Hull Item #1:</td>
+                                <td>
+                                    <SELECT NAME = "hull_item_1">
+                                        <OPTION VALUE = "st">Structure
+                                        <OPTION VALUE = "ar">Armor
+                                        <OPTION VALUE = "sh">Shield
+                                        <OPTION VALUE = "bo">Booster
+                                        <OPTION VALUE = "ra">Radar
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "hull_item_1_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Hull Item #2:</td>
+                                <td>
+                                    <SELECT NAME = "hull_item_2">
+                                        <OPTION VALUE = "st">Structure
+                                        <OPTION VALUE = "ar">Armor
+                                        <OPTION VALUE = "sh">Shield
+                                        <OPTION VALUE = "bo">Booster
+                                        <OPTION VALUE = "ra">Radar
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "hull_item_2_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Hull Item #3:</td>
+                                <td>
+                                    <SELECT NAME = "hull_item_3">
+                                        <OPTION VALUE = "st">Structure
+                                        <OPTION VALUE = "ar">Armor
+                                        <OPTION VALUE = "sh">Shield
+                                        <OPTION VALUE = "bo">Booster
+                                        <OPTION VALUE = "ra">Radar
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "hull_item_3_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <!-- END OF HULL ITEMS
+                            
+                            
+                            -->
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Ammo Item #1:</td>
+                                <td>
+                                    <SELECT NAME = "ammo_item_1">
+                                        <OPTION VALUE = "dm">Damage
+                                        <OPTION VALUE = "fr">Firing rate
+                                        <OPTION VALUE = "hc">Hullcrit
+                                        <OPTION VALUE = "sc">Shieldcrit
+                                        <OPTION VALUE = "rn">Range
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "ammo_item_1_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Ammo Item #2:</td>
+                                <td>
+                                    <SELECT NAME = "ammo_item_2">
+                                        <OPTION VALUE = "dm">Damage
+                                        <OPTION VALUE = "fr">Firing rate
+                                        <OPTION VALUE = "hc">Hullcrit
+                                        <OPTION VALUE = "sc">Shieldcrit
+                                        <OPTION VALUE = "rn">Range
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "ammo_item_2_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Ammo Item #3:</td>
+                                <td>
+                                    <SELECT NAME = "ammo_item_3">
+                                        <OPTION VALUE = "dm">Damage
+                                        <OPTION VALUE = "fr">Firing rate
+                                        <OPTION VALUE = "hc">Hullcrit
+                                        <OPTION VALUE = "sc">Shieldcrit
+                                        <OPTION VALUE = "rn">Range
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "ammo_item_3_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                            <!-- END OF AMMO ITEMS
+                            
+                            
+                            -->
+                            <tr><td><br></td></tr>
+
+                            <tr>
+                                <td>Turret:</td>
+                                <td>
+                                    <SELECT NAME = "turret">
+                                        <OPTION VALUE = "di">Disruptive
+                                        <OPTION VALUE = "ba">Ballistic
+                                        <OPTION VALUE = "pr">Proton
+                                        <OPTION VALUE = "io">Ionic
+                                        <OPTION VALUE = "pl">Plasma
+                                    </SELECT>
+                                </td>
+                                <td>Tier:</td>
+                                <td>
+                                    <SELECT NAME = "turret_tier">
+                                        <OPTION VALUE = "1">Common (yellow)
+                                        <OPTION VALUE = "2">Uncommon (green)
+                                        <OPTION VALUE = "3">Rare (blue)
+                                        <OPTION VALUE = "4">Epic (purple)
+                                        <OPTION VALUE = "5">Legendary (red)
+                                    </SELECT>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                    <!--- END OF ITEMS
+                    
+                    -->
+                    <form name="passives">
+                        <table>
+                            <tr>
+                                <td>Passive skills:</td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Scientists:</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" value=1 name="sci" id="S1" onclick="checkcontrol_sci(0)">Scientific Officer<br>
+                                    <input type="checkbox" value=2 name="sci" id="S2" onclick="checkcontrol_sci(1)">Fleet Customization<br>
+                                    <input type="checkbox" value=3 name="sci" id="S3" onclick="checkcontrol_sci(2)">Advanced Colonization System<br>
+                                    <input type="checkbox" value=4 name="sci" id="S4" onclick="checkcontrol_sci(3)">Short Range Scanner<br>
+                                    <input type="checkbox" value=5 name="sci" id="S5" onclick="checkcontrol_sci(4)">Groundbreaking Technology<br>
+                                </td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Navigators:</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" value=1 name="nav" id="N1" onclick="checkcontrol_nav(0)">High-ranking officer<br>
+                                    <input type="checkbox" value=2 name="nav" id="N2" onclick="checkcontrol_nav(1)">High-energy turn<br>
+                                    <input type="checkbox" value=3 name="nav" id="N3" onclick="checkcontrol_nav(2)">Evasive maneuvers<br>
+                                    <input type="checkbox" value=4 name="nav" id="N4" onclick="checkcontrol_nav(3)">Adv. Emergency pod<br>
+                                    <input type="checkbox" value=5 name="nav" id="N5" onclick="checkcontrol_nav(4)">Priority officer<br>
+                                </td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Engineers:</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" value=1 name="eng" id="E1" onclick="checkcontrol_eng(0)">Automatic repairs<br>
+                                    <input type="checkbox" value=2 name="eng" id="E2" onclick="checkcontrol_eng(1)">Veteran engineers<br>
+                                    <input type="checkbox" value=3 name="eng" id="E3" onclick="checkcontrol_eng(2)">Shield derivation device<br>
+                                    <input type="checkbox" value=4 name="eng" id="E4" onclick="checkcontrol_eng(3)">Reinforced ram<br>
+                                    <input type="checkbox" value=5 name="eng" id="E5" onclick="checkcontrol_eng(4)">Makeshift repairs<br>
+                                </td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Gunners:</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" value=1 name="gun" id="G1" onclick="checkcontrol_gun(0)">Legendary markmanship<br>
+                                    <input type="checkbox" value=2 name="gun" id="G2" onclick="checkcontrol_gun(1)">Quick targeting<br>
+                                    <input type="checkbox" value=3 name="gun" id="G3" onclick="checkcontrol_gun(2)">Asteroid charges<br>
+                                    <input type="checkbox" value=4 name="gun" id="G4" onclick="checkcontrol_gun(3)">Veteran gunners<br>
+                                    <input type="checkbox" value=5 name="gun" id="G5" onclick="checkcontrol_gun(4)">Ballistic tracking<br>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                    <!-- END OF PASSIVES, END OF LEFT COLUMN -->
+                <td valign="top">
+                    <form name="skills">
+                        <table>
+                            <tr>
+                                Skills:
+                            </tr>
+                            <tr>
+                                <td>Skill #1:</td>
+                                <td>
+                                    <SELECT NAME = "skill_1">
+                                        <!-- options are added with function addskills() onload -->
+                                    </SELECT>
+                                </td>
+                                <td>Level:</td>
+                                <td>
+                                    <SELECT NAME = "skill_1_level" onchange="update_skillpoints()";>
+                                            <OPTION VALUE = 0>0
+                                        <OPTION VALUE = 1>1
+                                        <OPTION VALUE = 2>2
+                                        <OPTION VALUE = 3>3
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Skill #2:</td>
+                                <td>
+                                    <SELECT NAME = "skill_2">
+                                    </SELECT>
+                                </td>
+                                <td>Level:</td>
+                                <td>
+                                    <SELECT NAME = "skill_2_level" onchange="update_skillpoints()";>
+                                            <OPTION VALUE = 0>0
+                                        <OPTION VALUE = 1>1
+                                        <OPTION VALUE = 2>2
+                                        <OPTION VALUE = 3>3
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Skill #3:</td>
+                                <td>
+                                    <SELECT NAME = "skill_3">
+                                    </SELECT>
+                                </td>
+                                <td>Level:</td>
+                                <td>
+                                    <SELECT NAME = "skill_3_level" onchange="update_skillpoints()";>
+                                            <OPTION VALUE = 0>0
+                                        <OPTION VALUE = 1>1
+                                        <OPTION VALUE = 2>2
+                                        <OPTION VALUE = 3>3
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Skill #4:</td>
+                                <td>
+                                    <SELECT NAME = "skill_4">
+                                    </SELECT>
+                                </td>
+                                <td>Level:</td>
+                                <td>
+                                    <SELECT NAME = "skill_4_level" onchange="update_skillpoints()";>
+                                            <OPTION VALUE = 0>0
+                                        <OPTION VALUE = 1>1
+                                        <OPTION VALUE = 2>2
+                                        <OPTION VALUE = 3>3
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td><td></td>
+                                <td>Points left:</td>
+                                <td> <input name="skillpoints_left" type="text" size="1" maxlength="1" readonly value=6></td>
+                        </table>
+                    </form>
+                    <!-- END OF SKILLS -->
+
+
+                    <!-- BEGINNING OF UPGRADES -->
+                    <form name="upgrades">
+                        <table>
+                            <tr>
+                                <td>Hull upgrades:</td>
+                                <td>level</td>
+                                <td>% Upgrade</td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Shield:</td>
+                                <td>
+                                    <SELECT NAME = "shield_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="shield_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Structure:</td>
+                                <td>
+                                    <SELECT NAME = "structure_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="structure_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Armor:</td>
+                                <td>
+                                    <SELECT NAME = "armor_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="armor_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Radar:</td>
+                                <td>
+                                    <SELECT NAME = "radar_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="radar_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Booster:</td>
+                                <td>
+                                    <SELECT NAME = "booster_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="booster_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <!-- END OF HULLUPGRADES -->
+                            <tr><td><br><br></td></tr>
+                            <tr>
+                                <td>Weapon upgrades:</td>
+                                <td>level</td>
+                                <td>% Upgrade</td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td>Hullcrit:</td>
+                                <td>
+                                    <SELECT NAME = "hullcrit_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="hullcrit_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Shieldcrit:</td>
+                                <td>
+                                    <SELECT NAME = "shieldcrit_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="shieldcrit_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Damage:</td>
+                                <td>
+                                    <SELECT NAME = "damage_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="damage_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Firingrate:</td>
+                                <td>
+                                    <SELECT NAME = "firing_rate_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="firing_rate_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Range:</td>
+                                <td>
+                                    <SELECT NAME = "range_upgrade" onchange="update_upgrade_percentage()";>
+                                            <OPTION VALUE = "0">0
+                                        <OPTION VALUE = "1">I
+                                        <OPTION VALUE = "2">II
+                                        <OPTION VALUE = "3">III
+                                        <OPTION VALUE = "4">IV
+                                        <OPTION VALUE = "5">V
+                                    </SELECT>
+                                </td>
+                                <td>
+                                    <input name="range_upgrade_percent" type="text" readonly value="0" size="3" maxlength ="3">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="button" value="Calculate!" onclick="calculate()"></td>
+                                <td><input type="checkbox" id="AC">Advanced colo</td>
+                                <td><input type="checkbox" id="CO">Convoy</td>
+                            </tr>
+                        </table>
+                    </form>
+                    <form name ="compare">
+                        <table>
+                            <tr>
+                                <td>Compare this build with another one</td>
+                            </tr>
+                            <tr><td><br></td></tr>
+                            <tr>
+                                <td><input type="text" value="enter new code here" name="new_code"></td>
+                                <td><input type="button" value="compare!" onclick="compare_builds()"></td>
+                            </tr>
+                            <tr>
+                                <td>or:</td>
+                                <td><input type="button" value="compare to curent build" onclick="compare_to_this()"></td>
+                            </tr>
+                        </table>
+                    </form>
+                    <!--thats all the information we need
+                    
+                    -->
+                </td>
+            </tr>
+            <tr>
+            <form name="results">
+                <td valign="top">
+
+                    <table>
+                        <tr><td>Results:<br></td></tr>
+                        <tr>
+
+                        </tr>
+                        <tr>
+                            <td>Min DPS guns:</td>
+                            <td><input type="text" readonly name="min_dps_guns"></td>
+                        </tr>
+                        <tr>
+                            <td>Max DPS guns:</td>
+                            <td><input type="text" readonly name="max_dps_guns"></td>
+                        </tr>
+                        <tr><td><br></td></tr>
+                        <tr>
+                            <td>Min DPS skills:</td>
+                            <td><input type="text" readonly name="min_dps_skills"></td>
+                        </tr>
+                        <tr>
+                            <td>Max DPS skills:</td>
+                            <td><input type="text" readonly name="max_dps_skills"></td>
+                        </tr>
+                        <tr><td><br></td></tr>
+                        <tr>
+                            <td>Min DPS combined:</td>
+                            <td><input type="text" readonly name="min_dps_combined"></td>
+                        </tr>
+                        <tr>
+                            <td>Max DPS combined:</td>
+                            <td><input type="text" readonly name="max_dps_combined"></td>
+                        </tr>
+                    </table>
+                </td>
+                <TD>
+                    <table>
+                        <tr>
+                            <td>Min EHP:</td>
+                            <td><input type="text" readonly name="min_ehp"></td>
+                        </tr>
+                        <tr>
+                            <td>Max EHP:</td>
+                            <td><input type="text" readonly name="max_ehp"></td>
+                        </tr>
+                        <tr><td><br></td></tr>
+                        <tr>
+                            <td>Min shield:</td>
+                            <td><input type="text" readonly name="min_shield"></td>
+                        </tr>
+                        <tr>
+                            <td>Max shield:</td>
+                            <td><input type="text" readonly name="max_shield"></td>
+                        </tr>
+                        <tr><td><br></td></tr>
+                        <tr>
+                            <td>CP needed for upgrades:</td>
+                            <td><input type="text" readonly name="needed_cp"></td>
+
+                        </tr>
+                        <tr>
+                            <td>CP gained:</td>
+                            <td><input type="text" readonly name="earned_cp"></td>
+                        </tr>
+                        <tr>
+                            <td>CP you have to farm:</td>
+                            <td><input type="text" readonly name="to_farm_cp"></td>
+                        </tr>
+                        <tr>
+                            <td>Number of escorts you need for that:</td>
+                            <td><input type="text" readonly name="escorts_to_farm"></td>
+                        </tr>
+                    </table>
+                </TD>
+            </form>
+        </tr>
+    </table>
+
+    <!-- behold the diagram! -->
+    <div style='position:relative; top:0px; height:210px'>
+        <SCRIPT Language="JavaScript">
+            document.open();
+            var border_x_min=50;
+            var border_x_max=720;
+            var border_width=border_x_max-border_x_min;
+            var group_width=border_width/15;
+            var D= new Diagram();
+            D.SetFrame(50, 30, 720, 240);
+            D.SetBorder(1, 16, 0, 600);
+            D.SetText("","", "DPS progression over techlevel blue-skills red-guns green-combined");
+            D.XScale="1";
+            D.YScale="1";
+            D.SetGridColor("#000000");
+            D.Draw("#FFFFFF", "#000000", false);
+            D.XGridDelta="1"
+            D.YGridDelta="100"
+            var graph_dps_guns=[],
+                graph_dps_skills=[],
+                graph_dps_effective = [],
+                graph_dps_guns_new=[],
+                graph_dps_skills_new=[],
+                graph_dps_effective_new = [],
+                i;
+            for (i=border_x_min; i<=border_x_max;i++){
+                graph_dps_guns[i] = new Pixel(i, D.ScreenY(100), "#ff0000");
+                graph_dps_skills[i] = new Pixel(i, D.ScreenY(100), "#0000ff");
+                graph_dps_effective[i] = new Pixel(i, D.ScreenY(100), "#00ff00");
+                graph_dps_guns_new[i] = new Pixel(i, D.ScreenY(0), "#ff0000");
+                graph_dps_skills_new[i] = new Pixel(i, D.ScreenY(0), "#0000ff");
+                graph_dps_effective_new[i] = new Pixel(i, D.ScreenY(0), "#00ff00");
+            }
+            document.close();                
+            function draw_dps(){
+                for (var j=1; j<17;j++){
+                    for (var i=border_x_min; i<=border_x_max; i++){ 
+                        if((i-50)<=j*group_width && (i-50)>(j-1)*group_width){
+                            graph_dps_guns[i].MoveTo(i,D.ScreenY(dps_guns[j]), "#ff0000");
+                            graph_dps_skills[i].MoveTo(i,D.ScreenY(dps_skills[j]), "#0000ff");
+                            graph_dps_effective[i].MoveTo(i,D.ScreenY(dps_effective[j]), "#00ff00");
+                        }
+                    }
+                }
+            }
+            function draw_dps_new() {
+                for (var j=1; j<17;j++){
+                    for (var i=border_x_min; i<=border_x_max; i+=2){ 
+                        if((i-50)<=j*group_width && (i-50)>(j-1)*group_width){
+                            graph_dps_guns_new[i].MoveTo(i,D.ScreenY(dps_guns_new[j]), "#ff0000");
+                            graph_dps_skills_new[i].MoveTo(i,D.ScreenY(dps_skills_new[j]), "#0000ff");
+                            graph_dps_effective_new[i].MoveTo(i,D.ScreenY(dps_effective_new[j]), "#00ff00");
+                        }
+                    }
+                }
+            }
+        </SCRIPT>
+    </div><br>
+        <div style='position:relative; top:0px; height:210px'>
+    <SCRIPT Language="JavaScript">
+            document.open();
+            var border_x_min=50;
+            var border_x_max=720;
+            var border_width=border_x_max-border_x_min;
+            var group_width_range=border_width/225;
+            var Range= new Diagram();
+            Range.SetFrame(50, 70, 720, 280);
+            Range.SetBorder(0, 200, 0, 600);
+            Range.SetText("","", "DPS progression over range");
+            Range.XScale="1";
+            Range.YScale="1";
+            Range.SetGridColor("#000000");
+            Range.Draw("#FFFFFF", "#000000", false);
+            Range.XGridDelta="1"
+            Range.YGridDelta="100"
+            var graph_dps_guns_over_range=[],
+                graph_dps_guns_over_range_new=[],
+                i;
+            for (var i=border_x_min; i<=border_x_max;i++){
+                graph_dps_guns_over_range[i] = new Pixel(i, Range.ScreenY(0), "#ff0000");
+                graph_dps_guns_over_range_new[i] = new Pixel(i, Range.ScreenY(0), "#ff0000");
+            }
+            document.close();                
+            function draw_dps_over_range(){
+                for (var j=0; j<=200;j++){
+                    for (var i=border_x_min; i<=border_x_max; i++){ 
+                        if((i-50)<=j*group_width_range && (i-50)>(j-1)*group_width_range){
+                            graph_dps_guns_over_range[i].MoveTo(i,Range.ScreenY(dps_guns_over_range[j]), "#ff0000");
+                        }
+                    }
+                }
+            }
+            function draw_dps_over_range_new(){
+                for (var j=0; j<=200;j++){
+                    for (var i=border_x_min; i<=border_x_max; i += 2){ 
+                        if((i-50)<=j*group_width_range && (i-50)>(j-1)*group_width_range){
+                            graph_dps_guns_over_range_new[i].MoveTo(i,Range.ScreenY(dps_guns_over_range_new[j]), "#ff0000");
+                        }
+                    }
+                }
+            }
+        </SCRIPT>
+    </div><br>
+    <div style='position:relative; top:0px; height:210px'>
+        <SCRIPT Language="JavaScript">
+            document.open();
+            var ehp_border_x_min=50;
+            var ehp_border_x_max=720;
+            var ehp_border_width=ehp_border_x_max-ehp_border_x_min;
+            var ehp_group_width=ehp_border_width/15;
+            var Q= new Diagram();
+            Q.SetFrame(50, 110, 720, 320);
+            Q.SetBorder(1, 16, 1000, 12000);
+            Q.SetText("","", "EHP progression over techlevel red-ehp blue-shields");
+            Q.XScale="1";
+            Q.YScale="1";
+            Q.SetGridColor("#000000");
+            Q.Draw("#FFFFFF", "#000000", false);
+            Q.XGridDelta="1"
+            Q.YGridDelta="2000"
+            var ehp_graph=[],
+                shield_graph=[],
+                ehp_graph_new=[],
+                shield_graph_new=[],
+                i;
+            for (var i=ehp_border_x_min; i<=ehp_border_x_max;i++){
+                ehp_graph[i] = new Pixel(i, Q.ScreenY(1000), "#ff0000");
+                shield_graph[i] = new Pixel(i, Q.ScreenY(1000), "#0000ff");
+                ehp_graph_new[i] = new Pixel(i, Q.ScreenY(1000), "#ff0000");
+                shield_graph_new[i] = new Pixel(i, Q.ScreenY(1000), "#0000ff");
+            }
+
+            document.close();                
+            function draw_line_ehp(){
+                for (var j=1; j<17;j++){
+                    for (var i=ehp_border_x_min; i<=ehp_border_x_max; i++){ 
+                        if((i-50)<=j*ehp_group_width && (i-50)>(j-1)*ehp_group_width){
+                            ehp_graph[i].MoveTo(i,Q.ScreenY(ehp[j]), "#ff0000");
+                            shield_graph[i].MoveTo(i,Q.ScreenY(shield[j]), "#0000ff");
+                        }
+                    }
+                }
+            }
+            function draw_ehp_new(){
+                for (var j=1; j<17;j++){
+                    for (var i=ehp_border_x_min; i<=ehp_border_x_max; i += 2){ 
+                        if((i-50)<=j*ehp_group_width && (i-50)>(j-1)*ehp_group_width){
+                            ehp_graph_new[i].MoveTo(i,Q.ScreenY(ehp_new[j]), "#ff0000");
+                            shield_graph_new[i].MoveTo(i,Q.ScreenY(shield_new[j]), "#0000ff");
+                        }
+                    }
+                }
+            }
+        </SCRIPT> 
+    </div>
+</body>
