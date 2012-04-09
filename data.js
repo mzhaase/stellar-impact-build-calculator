@@ -261,6 +261,10 @@ skill[13][8] = [60,60,60,60]; //cooldown
 skill[13][9] = 13; //skill type 10-maneuver usw
 skill[13][10] = [0,50,150,300]; // heal others
 skill[13][12] = "Emergency repairs"; // name
+skill[13][11] = []
+for (var i = 0; i <= 4; i += 1) {
+    skill[13][11][i] = skill[13][6][i] / skill[13][8][i];
+}
 
 
 //Backup generator 14

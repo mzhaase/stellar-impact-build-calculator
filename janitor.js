@@ -183,9 +183,9 @@ function update_upgrade_percentage() {
 function calculate() {
     "use strict";
     generate_code();
-    calculate_ehp();
     calculate_cp();
     calculate_dps();
+    calculate_ehp();
 }
 
 function loadup() {

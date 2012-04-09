@@ -11,6 +11,14 @@ and open the template in the editor.
     
     CHANGELOG
     
+    0.5
+    
+    - Calculator now calculates structure regen per second. This is based on 
+    armor, the 'auomatic repairs' passive skill, and emergency repairs. Fully 
+    upgraded emergency repairs gives you 600 points every 60 seconds, so this
+    would get you a regen of 10 points / s. Every armor percent gives 0.1
+    additional structure points per second.
+    
     0.4.4
     
     - Command field is now working. Keep in mind that buffs only affect the 'effective dps'.
@@ -734,6 +742,11 @@ and open the template in the editor.
                         <tr>
                             <td>Max DPS combined:</td>
                             <td><input type="text" readonly name="max_dps_combined"></td>
+                        </tr>
+                        <tr><td><br></td></tr>
+                        <tr>
+                            <td>Regeneration structure per second:</td>
+                            <td><input type="text" readonly name="regeneration"></td>
                         </tr>
                     </table>
                 </td>

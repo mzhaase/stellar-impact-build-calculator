@@ -1,14 +1,14 @@
-var ehp = [];
-var shield = [];
+var ehp = [],
+    shield = [],
+    armorbonus = [];
 
 //this function works alsmost exactly as dps.js. Understand dps.js first, 
 //its better documented. In fact, i just copied dps.js and changed a couple of 
 //variable names around to create this file
-function calculate_ehp() {
+function calculate_ehp_function() {
     "use strict"; //JSLint told me this was a good idea
     var structuremultiplier = [],
     shieldmultiplier = [],
-    armorbonus = [],
     ship = Number(document.shipselect.ship.value),
     structureitems = 0,
     armoritems = 0,
@@ -98,5 +98,26 @@ function calculate_ehp() {
     document.results.max_ehp.value = ehp[15];
     document.results.min_shield.value = shield[1];
     document.results.max_shield.value = shield[15];
+}
+
+function calculate_regen() {
+    "use strict";
+    
+    var regen = [],
+        ship = Number(document.shipselect.ship.value), //find out selected ship
+        techlevel;
+        
+    for (techlevel = 1; techlevel <= 16; techlevel += 1) {
+        regen[techlevel] = skills_regeneration_per_second[techlevel] + armorbonus[techlevel] * 10 + shiparray[ship][2] / 10;
+        if (document.passives.E1.checked === true) {
+            regen[techlevel] += 2;
+        }
+    }
+    document.results.regeneration.value = regen[15];
+}
+
+function calculate_ehp() {
+    calculate_ehp_function();
     draw_line_ehp();
+    calculate_regen();
 }

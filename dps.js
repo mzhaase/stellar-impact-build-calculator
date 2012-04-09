@@ -10,6 +10,7 @@ skills_range_bonus = [],
 skills_cooldown_bonus = [],
 skills_critical_hit_bonus = [],
 skills_critical_hit_damage_bonus = [],
+skills_regeneration_per_second = [],
 dps_effective = [];
 
 // this function calculates turret dps    
@@ -194,6 +195,7 @@ function calculate_dps_skills() {
         skills_critical_hit_bonus[i] = 0;
         skills_critical_hit_damage_bonus[i] = 0;
         skills_cooldown_bonus[i] = 0;
+        skills_regeneration_per_second[i] = 0;
     }
     for (i = 1; i <= 4; i += 1) { //for the 4 skill slots
         if (document.shipselect.siegemode_checkbox.checked === false) {
@@ -229,6 +231,9 @@ function calculate_dps_skills() {
                                     }
                                     if (skill[j][0] === "pt") {  //priority target unfortunately has more than one effect, so i have to detect it seperately
                                         skills_critical_hit_damage_bonus[techlevel] += skill[j][10][k];
+                                    }
+                                    if (skill[j][1] === "heal") {
+                                        skills_regeneration_per_second[techlevel] += skill[j][11][k];
                                     }
                                     continue Tech;
                                 } 
