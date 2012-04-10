@@ -59,8 +59,30 @@ var medium_turret=[6,120,50,55];
 var heavy_turret=[9,225,60,65];
 var shc=[6,500,40,100]; //super heavy cannon cooldown, damage, min range, max range
 
-/* SKILLS 
+var turretarray = []; //this array is for the turret items
 
+turretarray[0] = [];
+turretarray[0][1] = "Plasma turrets";
+turretarray[0][2] = "pl";
+
+turretarray[1] = [];
+turretarray[1][1] = "Ionic turrets";
+turretarray[1][2] = "io";
+
+turretarray[2] = [];
+turretarray[2][1] = "Disruptive turrets";
+turretarray[2][2] = "di";
+
+turretarray[3] = [];
+turretarray[3][1] = "Proton turrets";
+turretarray[3][2] = "pr";
+
+turretarray[4] = [];
+turretarray[4][1] = "Ballistic turrets";
+turretarray[4][2] = "ba";
+turretarray[4][3] = [3,3.5,4,4.5,5];
+
+/*
 skill[z][0] = ; //id
 skill[z][1] = ; //type
 skill[z][2] = ; //damge

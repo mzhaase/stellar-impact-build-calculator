@@ -58,6 +58,9 @@ function calculate_dps_guns() { //dps for turrets
             rangeitems += Number(item_range[n]);
         }
     } // now we calculate the multiplier-arrays
+    if (document.items.turret.value === "ba") {
+        damageitems += Number(turretarray[4][3][document.items.turret_tier.value]);
+    }
     for (i = 1; i < 16; i += 1) {
         damagemultiplier[i] = 0;
         critmultiplier[i] = 0;
