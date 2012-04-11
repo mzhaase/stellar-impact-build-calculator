@@ -1,0 +1,108 @@
+CHANGELOG
+    
+0.5.2
+
+- Plasma turrets now do correct amount of critical hit (the part that hits the
+ship crits, the AoE dont). This works by multiplying the critical hit dps by
+1 - %AoE/100
+
+    0.5.1 
+    
+    - Balistic turrets now work
+    
+    0.5
+    
+    - Calculator now calculates structure regen per second. This is based on 
+    armor, the 'auomatic repairs' passive skill, and emergency repairs. Fully 
+    upgraded emergency repairs gives you 600 points every 60 seconds, so this
+    would get you a regen of 10 points / s. Every armor percent gives 0.1
+    additional structure points per second.
+    
+    0.4.4
+    
+    - Command field is now working. Keep in mind that buffs only affect the 'effective dps'.
+    
+    0.4.3
+    
+    - cleaned up the html.
+    
+    0.4.2
+    
+    - now squadrons really work
+    
+    0.4.1
+    
+    - Made calculate_dps_skills easier to maintain and a lot faster
+    - calculate_dps_guns is now twice as fast
+    - calculate_ehp not twice as fast
+    
+    0.4
+    
+    - There is now a 'sieged mode' checkbox available if you choose artillery 
+    ship. In sieged mode, only DPS of the SHC and the artillery-skills is cal-
+    culated.
+    - Squadrons are now taken into account
+    - Fixed for patch 1.12b. Old data still available in the data_patch_1_12.js file.
+    - Fixed bug where some skills would be added multiple times
+       
+    0.3.3
+    
+    - updated for patch 1.12. old data is still available in the data_patch_1_11.js file.
+    
+    
+    0.3.2
+    
+    - there is now a 'compare to actual build' button. This way you can better fine-tune 
+    your build. Just make a build, press the 'compare to this' button, then make 
+    changes and press calculate as often as you want to see how everything changes.
+    The dotted lines represent your old build
+    - Made everything easier to maintain. Now, if a new ship or skill is added, 
+    you just have to add it to the 'database'. Thats it, no programming required 
+    (if it fits one of the types). It just works and is automatically added to 
+    the drop-down-menu(s) the only thing used for skills is 
+    skill[id][11][techlevel], anyway.
+    
+    
+    V 0.3.1
+    
+    - changed the colors back to the normal ones, if you compare a build the new lines are now dotted
+    
+    
+    V 0.3
+    
+    - you can now load a second build to compare your current one to
+    - more information: dps min/max guns, dps min/max skills, ehp min/max, shields min/max
+    - dps skills is now calculated before dps_guns, because it now also calculates the skill buffs
+    - priority target now taken into account
+    - skill dps calculation now a lot more efficient and easier to maintain
+    - new graph: total gun-dps over range (im just throwing all kind of features in there, let me know when they are useless)
+    * for this graph, rangeupgrades and radar beacon are taken into account. did you know that the maximum archievable range is almost 130 units?
+    * right now, you have to take radar beacon yourself to see the effect
+    * keep in mind that the whole program currently doesnt work with artillery ship, only unsieged damage is taken into account
+    - graphs now have relative placement instead of absolute.
+
+    
+    V 0.2.1 02.04.2012
+    
+    -effective DPS now rounded
+    -replaced all 'new Array()' with literal array notation '[]', should speed 
+    things up a little.
+    -better readability for 80 column displays.
+    -moved form-functions to janitor.js
+    -general code-cleanup
+    
+    
+    V 0.2 02.04.2012
+        
+     - groundbreaking technology now calculated in 5 rows instead of 73
+    - dps for skills now calculated. following skills are taken into account:
+    *quantum leap
+    *scannerj
+    *tracker
+    *rocket battery
+    *missile battery
+    *torpedoes
+    *shockwave
+    -combined DPS now calculated. thats (skill_dps+gun_dps)*skill_buff
+    -fixed size of diagrams
+    -ehp diagram now shows ehp (red) and shield (green) seperately.

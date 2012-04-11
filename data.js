@@ -64,6 +64,7 @@ var turretarray = []; //this array is for the turret items
 turretarray[0] = [];
 turretarray[0][1] = "Plasma turrets";
 turretarray[0][2] = "pl";
+turretarray[0][3] = [30,35,40,45,50]; //%aoe
 
 turretarray[1] = [];
 turretarray[1][1] = "Ionic turrets";

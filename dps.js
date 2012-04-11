@@ -31,6 +31,7 @@ function calculate_dps_guns() { //dps for turrets
     dmgmaxupgrade = document.upgrades.damage_upgrade.value,
     frmaxupgrade = document.upgrades.firing_rate_upgrade.value,
     hcmaxupgrade = document.upgrades.hullcrit_upgrade.value,
+    crit = 1, // is 1 for every turret except plasma
     n,
     i,
     j,
@@ -60,6 +61,9 @@ function calculate_dps_guns() { //dps for turrets
     } // now we calculate the multiplier-arrays
     if (document.items.turret.value === "ba") {
         damageitems += Number(turretarray[4][3][document.items.turret_tier.value]);
+    }
+    if (document.items.turret.value === "pl") {
+        crit = 1 - turretarray[0][3][Number(document.items.turret_tier.value)] / 100;
     }
     for (i = 1; i < 16; i += 1) {
         damagemultiplier[i] = 0;
@@ -120,22 +124,22 @@ function calculate_dps_guns() { //dps for turrets
         for (i = 1; i < 17; i += 1) {
             dps_guns_light[i] = Math.round(shiparray[ship][7] * ((1 / light_turret[0]) 
                 * light_turret[1] * damagemultiplier[i] * frmultiplier[i] + 2 
-                * (1 + (skills_critical_hit_damage_bonus[i] / 100)) 
+                * crit *(1 + (skills_critical_hit_damage_bonus[i] / 100)) 
                 * ((1 / light_turret[0]) * light_turret[1] * damagemultiplier[i] 
-                    * frmultiplier[i] * (shiparray[ship][6] / 100 
-                        + critmultiplier[i] + skills_critical_hit_bonus[i] / 100))));
+                * frmultiplier[i] * (shiparray[ship][6] / 100 
+                + critmultiplier[i] + skills_critical_hit_bonus[i] / 100))));
             dps_guns_medium[i] = Math.round(shiparray[ship][8] * ((1 / medium_turret[0]) 
                 * medium_turret[1] * damagemultiplier[i] * frmultiplier[i] + 2 
-                * (1 + (skills_critical_hit_damage_bonus[i] / 100)) 
+                * crit * (1 + (skills_critical_hit_damage_bonus[i] / 100)) 
                 * ((1 / medium_turret[0]) * medium_turret[1] * damagemultiplier[i] 
-                    * frmultiplier[i] * (shiparray[ship][6] / 100 
-                        + critmultiplier[i] + skills_critical_hit_bonus[i] / 100))));
+                * frmultiplier[i] * (shiparray[ship][6] / 100 
+                + critmultiplier[i] + skills_critical_hit_bonus[i] / 100))));
             dps_guns_heavy[i] = Math.round(shiparray[ship][9] * ((1 / heavy_turret[0]) 
                 * heavy_turret[1] * damagemultiplier[i] * frmultiplier[i] + 2 
-                * (1 + (skills_critical_hit_damage_bonus[i] / 100)) 
+                * crit * (1 + (skills_critical_hit_damage_bonus[i] / 100)) 
                 * ((1 / heavy_turret[0]) * heavy_turret[1] * damagemultiplier[i] 
-                    * frmultiplier[i] * (shiparray[ship][6] / 100 
-                        + critmultiplier[i] + skills_critical_hit_bonus[i] / 100))));
+                * frmultiplier[i] * (shiparray[ship][6] / 100 
+                + critmultiplier[i] + skills_critical_hit_bonus[i] / 100))));
             dps_guns[i] = dps_guns_light[i] + dps_guns_medium[i] + dps_guns_heavy[i];
         }
         for (i = 0; i <= 200; i += 1){
@@ -176,7 +180,7 @@ function calculate_dps_guns() { //dps for turrets
         dps_guns.shift();
         dps_guns[16] = temp;
     }
-    // now we calculate the DPS over range
+// now we calculate the DPS over range
 }
 
 
