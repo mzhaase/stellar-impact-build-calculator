@@ -1,5 +1,9 @@
 CHANGELOG
     
+0.5.3
+
+- Artishots now can do critical hit damage
+
 0.5.2
 
 - Plasma turrets now do correct amount of critical hit (the part that hits the

@@ -161,7 +161,7 @@ function calculate_dps_guns() { //dps for turrets
         }
     } else {
         for (i = 1; i <= 16; i += 1){ // artilleryship, siege mode activated
-            dps_guns[i] = 1/ shc[0] * shc[1] * damagemultiplier[i] * frmultiplier[i];
+            dps_guns[i] = 1 / shc[0] * shc[1] * damagemultiplier[i] * frmultiplier[i] + 2 * (1 + skills_critical_hit_damage_bonus[i] / 100 ) * 1 / shc[0] * shc[1] / 2 * damagemultiplier[i] * frmultiplier[i] * (critmultiplier[i] + skills_critical_hit_bonus[i]) + 2 * (1 + skills_critical_hit_damage_bonus[i] / 100 ) * 1 / shc[0] * shc[1] / 2 * damagemultiplier[i] * frmultiplier[i] * (critmultiplier[i] + skills_critical_hit_bonus[i]);
         }
         for (i = 0; i <= 200; i += 1) {
             if (i < shc[3] * rangemultiplier && i >= 40) {
