@@ -65,7 +65,7 @@ function calculate_dps_guns() { //dps for turrets
     if (document.items.turret.value === "pl") {
         crit = 1 - turretarray[0][3][Number(document.items.turret_tier.value)] / 100;
     }
-    for (i = 1; i < 16; i += 1) {
+    for (i = 1; i < 17; i += 1) {
         damagemultiplier[i] = 0;
         critmultiplier[i] = 0;
         frmultiplier[i] = 0;
@@ -176,9 +176,9 @@ function calculate_dps_guns() { //dps for turrets
     //damage calculated, now we  check if we have groundbreaking technology 
     //(makes all upgrades available one techlevel sooner
     if (document.passives.S5.checked === true) {
-        temp = dps_guns[16];
+        temp = dps_guns[15];
         dps_guns.shift();
-        dps_guns[16] = temp;
+        dps_guns[15] = temp;
     }
 // now we calculate the DPS over range
 }

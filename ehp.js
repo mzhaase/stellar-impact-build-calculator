@@ -87,12 +87,12 @@ function calculate_ehp_function() {
         shield[i] = Math.round(shield[i]);
     } // and thats hat. 
     if (document.passives.S5.checked === true) {
-        temp = ehp[16];
+        temp = ehp[15];
         ehp.shift();
-        ehp[16] = temp;
-        temp = shield[16];
+        ehp[15] = temp;
+        temp = shield[15];
         shield.shift();
-        shield[16] = temp;
+        shield[15] = temp;
     }
     document.results.min_ehp.value = ehp[1];
     document.results.max_ehp.value = ehp[15];
